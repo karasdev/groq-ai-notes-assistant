@@ -1,72 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Groq AI Notes Assistant
 
-## Getting Started
+A small **Next.js** app for saving notes and asking **Groq**-powered questions grounded in your own content. Notes live in a **SQLite** database via **Prisma**; the assistant retrieves relevant notes with lightweight keyword scoring, then answers using only that context.
 
-First, run the development server:
+## Features
+
+- **Notes** — Create, list, and delete notes with title, body, and creation date.
+- **Ask AI** — Submit a question; the app ranks notes by word overlap with your question, passes the top matches to Groq, and returns an answer plus source references.
+- **Grounded answers** — System prompts instruct the model to use only the provided notes and to admit when information is missing.
+
+## Tech stack
+
+| Layer        | Choice                                      |
+| ------------ | ------------------------------------------- |
+| Framework    | Next.js 16 (App Router)                     |
+| UI           | React 19, Tailwind CSS 4                    |
+| Database     | SQLite (`DATABASE_URL` in Prisma)           |
+| ORM          | Prisma 6                                    |
+| AI           | [Groq API](https://console.groq.com/) via `groq-sdk` |
+
+## How it works
+
+1. On **Ask**, all notes are loaded and scored by how often meaningful terms from the question appear as whole words in the combined title and body.
+2. The highest-scoring notes are formatted as context and sent to Groq chat completions.
+3. The UI shows the model answer and the notes used as sources.
+
+This is a simple retrieval step (not embeddings or a vector DB), which keeps the project easy to run locally.
+
+## Prerequisites
+
+- **Node.js** 20+ (recommended; aligns with `@types/node` in the project)
+- A **Groq API key** from [Groq Console → API Keys](https://console.groq.com/keys)
+
+## Getting started
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment variables
+
+Copy the sample file and set your Groq key:
+
+```bash
+cp env.example .env
+```
+
+Edit `.env` (do not commit it). The template includes:
+
+| Variable | Required | Description |
+| -------- | -------- | ----------- |
+| `DATABASE_URL` | Yes | SQLite path (see `env.example`; default `file:./dev.db`) |
+| `GROQ_API_KEY` | Yes | From [Groq Console → API Keys](https://console.groq.com/keys) |
+| `GROQ_CHAT_MODEL` | No | Chat model id; defaults to `llama-3.1-8b-instant` in code if unset |
+
+To list models your key can use:
+
+```bash
+curl https://api.groq.com/openai/v1/models \
+  -H "Authorization: Bearer YOUR_GROQ_API_KEY"
+```
+
+### 3. Database
+
+Generate the Prisma client and apply migrations:
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+For a fresh named migration after schema changes:
+
+```bash
+npx prisma migrate dev --name your_migration_name
+```
+
+Optional — open Prisma Studio to inspect data:
+
+```bash
+npx prisma studio
+```
+
+### 4. Run the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Use **Notes** to add content, then **Ask AI** to query it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command        | Description              |
+| -------------- | ------------------------ |
+| `npm run dev`  | Start dev server         |
+| `npm run build`| Production build         |
+| `npm run start`| Run production server    |
+| `npm run lint` | Run ESLint               |
 
-## Learn More
+## HTTP API (summary)
 
-To learn more about Next.js, take a look at the following resources:
+| Method & path        | Description                              |
+| -------------------- | ---------------------------------------- |
+| `GET /api/notes`     | List all notes (newest first)            |
+| `POST /api/notes`    | Create a note (`title`, `content` JSON)  |
+| `DELETE /api/notes/:id` | Delete a note by id                   |
+| `POST /api/ask`      | Ask a question (`question` JSON); uses stored notes + Groq |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Successful responses generally include a `success` boolean where applicable; validation errors use `4xx` with a `message` field.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure (high level)
 
-## Deploy on Vercel
+```
+app/
+  api/ask/route.ts      # Groq + note retrieval
+  api/notes/            # CRUD API for notes
+  ask/page.tsx          # Ask UI
+  notes/page.tsx        # Notes UI
+  page.tsx              # Landing
+lib/
+  prisma.ts             # Singleton Prisma client
+prisma/
+  schema.prisma         # Note model
+  migrations/           # SQL migrations
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Set `DATABASE_URL` to a persistent SQLite path or switch Prisma to another [supported database](https://www.prisma.io/docs/orm/reference/supported-databases) for production.
+- Configure `GROQ_API_KEY` (and optionally `GROQ_CHAT_MODEL`) in your host’s environment; never expose the key in client-side code.
+- Run `npx prisma migrate deploy` in CI or release pipelines when using migrate-based workflows.
 
--Run migration
-npx prisma migrate dev --name init
+## Learn more
 
--Generate Prisma client
-npx prisma generate
-
--How to run db
-npx prisma studio
-
-Prisma 6 + SQLite
-
--------GROQ_API_KEY and GROQ_CHAT_MODEL---------
-
-1. How to get GROQ_API_KEY
-
-Go here:
-
-https://console.groq.com/keys
-
-Then:
-
-Sign in to Groq.
-Click API Keys.
-Click Create API Key.
-Copy the key.
-Put it in .env.
-
-Example:
-
-GROQ_API_KEY="gsk_your_key_here"
-
-2. How to get GROQ_CHAT_MODEL
-
-curl https://api.groq.com/openai/v1/models \
-  -H "Authorization: Bearer YOUR_GROQ_API_KEY"
+- [Next.js documentation](https://nextjs.org/docs)
+- [Prisma documentation](https://www.prisma.io/docs)
+- [Groq API](https://console.groq.com/docs)
