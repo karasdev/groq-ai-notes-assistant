@@ -45,3 +45,28 @@ npx prisma generate
 npx prisma studio
 
 Prisma 6 + SQLite
+
+-------GROQ_API_KEY and GROQ_CHAT_MODEL---------
+
+1. How to get GROQ_API_KEY
+
+Go here:
+
+https://console.groq.com/keys
+
+Then:
+
+Sign in to Groq.
+Click API Keys.
+Click Create API Key.
+Copy the key.
+Put it in .env.
+
+Example:
+
+GROQ_API_KEY="gsk_your_key_here"
+
+2. How to get GROQ_CHAT_MODEL
+
+curl https://api.groq.com/openai/v1/models \
+  -H "Authorization: Bearer YOUR_GROQ_API_KEY"
