@@ -1,8 +1,16 @@
 # Groq AI Notes Assistant
 
+![Groq AI Notes Assistant overview](docs/images/readme-banner.svg)
+
 A Next.js notes application with a Groq-powered question-answering workflow. Users can save notes, ask questions about their saved content, and receive grounded answers with source references.
 
 The app stores notes in SQLite through Prisma, retrieves relevant notes with lightweight keyword matching, and sends the selected note context to Groq for answer generation.
+
+## Preview
+
+| Notes | Ask AI |
+| ----- | ------ |
+| ![Notes management screen](docs/images/notes-screen.svg) | ![Ask AI screen](docs/images/ask-screen.svg) |
 
 ## Features
 

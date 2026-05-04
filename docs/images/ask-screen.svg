@@ -1,0 +1,21 @@
+<svg width="960" height="600" viewBox="0 0 960 600" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Ask AI screen</title>
+  <desc id="desc">Mock screenshot showing a question form, generated answer, and source references.</desc>
+  <rect width="960" height="600" rx="20" fill="#F8FAFC"/>
+  <rect x="64" y="50" width="832" height="500" rx="18" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="104" y="112" fill="#111827" font-family="Arial, sans-serif" font-size="34" font-weight="700">Ask Your Notes</text>
+  <text x="104" y="146" fill="#64748B" font-family="Arial, sans-serif" font-size="17">Ask a question based on your saved notes.</text>
+  <rect x="104" y="188" width="752" height="112" rx="12" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="128" y="224" fill="#64748B" font-family="Arial, sans-serif" font-size="16">What are the main roadmap priorities?</text>
+  <rect x="104" y="324" width="108" height="44" rx="10" fill="#2563EB"/>
+  <text x="139" y="352" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="16" font-weight="700">Ask</text>
+  <rect x="104" y="398" width="752" height="96" rx="12" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="128" y="434" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">Answer</text>
+  <rect x="128" y="454" width="540" height="10" rx="5" fill="#475569"/>
+  <rect x="128" y="476" width="462" height="10" rx="5" fill="#94A3B8"/>
+  <rect x="606" y="324" width="250" height="44" rx="22" fill="#DCFCE7"/>
+  <text x="632" y="352" fill="#166534" font-family="Arial, sans-serif" font-size="15" font-weight="700">Sources included</text>
+  <rect x="640" y="86" width="216" height="76" rx="14" fill="#EFF6FF" stroke="#BFDBFE"/>
+  <text x="666" y="118" fill="#1E3A8A" font-family="Arial, sans-serif" font-size="15" font-weight="700">Grounded response</text>
+  <text x="666" y="142" fill="#1D4ED8" font-family="Arial, sans-serif" font-size="13">Uses saved note context</text>
+</svg>

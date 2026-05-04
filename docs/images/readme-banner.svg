@@ -1,0 +1,22 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Groq AI Notes Assistant overview</title>
+  <desc id="desc">A polished overview graphic for a notes app that answers questions using saved notes and Groq.</desc>
+  <rect width="1200" height="420" rx="28" fill="#0F172A"/>
+  <rect x="48" y="48" width="1104" height="324" rx="22" fill="#111827" stroke="#334155"/>
+  <rect x="88" y="88" width="438" height="244" rx="16" fill="#F8FAFC"/>
+  <rect x="118" y="120" width="170" height="16" rx="8" fill="#0F172A"/>
+  <rect x="118" y="154" width="330" height="10" rx="5" fill="#94A3B8"/>
+  <rect x="118" y="178" width="282" height="10" rx="5" fill="#CBD5E1"/>
+  <rect x="118" y="222" width="348" height="68" rx="12" fill="#E2E8F0"/>
+  <rect x="142" y="244" width="210" height="10" rx="5" fill="#64748B"/>
+  <rect x="142" y="266" width="274" height="8" rx="4" fill="#94A3B8"/>
+  <rect x="594" y="88" width="518" height="244" rx="16" fill="#020617" stroke="#1E293B"/>
+  <rect x="632" y="126" width="278" height="14" rx="7" fill="#F8FAFC"/>
+  <rect x="632" y="160" width="398" height="10" rx="5" fill="#94A3B8"/>
+  <rect x="632" y="184" width="344" height="10" rx="5" fill="#64748B"/>
+  <rect x="632" y="228" width="180" height="42" rx="21" fill="#22C55E"/>
+  <text x="662" y="254" fill="#052E16" font-family="Arial, sans-serif" font-size="16" font-weight="700">Ask Groq</text>
+  <path d="M536 210H584" stroke="#38BDF8" stroke-width="6" stroke-linecap="round"/>
+  <path d="M568 194L584 210L568 226" stroke="#38BDF8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="88" y="390" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="18">Save notes, retrieve relevant context, and answer questions with source references.</text>
+</svg>
