@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Note = {
   id: string;
@@ -10,47 +10,80 @@ type Note = {
 };
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: "1",
-      title: "Invoice Feature",
-      content:
-        "We need to finish the invoice feature by Friday. John will review the API changes.",
-      createdAt: "2026-05-04",
-    },
-    {
-      id: "2",
-      title: "Client Meeting",
-      content:
-        "The client asked for a dashboard page, CSV export, and monthly email reports.",
-      createdAt: "2026-05-04",
-    },
-  ]);
-
+  const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
 
-  function addNote() {
+  async function fetchNotes() {
+    try {
+      const res = await fetch("/api/notes");
+      const data = await res.json();
+
+      if (data.success) {
+        setNotes(data.notes);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notes:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function addNote() {
     if (!title.trim() || !content.trim()) return;
 
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      title,
-      content,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
+    setCreating(true);
 
-    setNotes([newNote, ...notes]);
-    setTitle("");
-    setContent("");
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          content,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setNotes([data.note, ...notes]);
+        setTitle("");
+        setContent("");
+      }
+    } catch (error) {
+      console.error("Failed to create note:", error);
+    } finally {
+      setCreating(false);
+    }
   }
 
-  function deleteNote(id: string) {
-    setNotes(notes.filter((note) => note.id !== id));
+  async function deleteNote(id: string) {
+    try {
+      const res = await fetch(`/api/notes/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setNotes(notes.filter((note) => note.id !== id));
+      }
+    } catch (error) {
+      console.error("Failed to delete note:", error);
+    }
   }
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+    <div className="px-6 py-10">
       <div className="mx-auto max-w-6xl">
         <header className="mb-10">
           <p className="text-sm text-slate-400">Notes</p>
@@ -92,9 +125,10 @@ export default function NotesPage() {
 
               <button
                 onClick={addNote}
-                className="w-full rounded-xl bg-white px-5 py-3 font-medium text-slate-950 transition hover:bg-slate-200"
+                disabled={creating}
+                className="w-full rounded-xl bg-white px-5 py-3 font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Add Note
+                {creating ? "Saving..." : "Add Note"}
               </button>
             </div>
           </section>
@@ -107,43 +141,50 @@ export default function NotesPage() {
               </span>
             </div>
 
-            <div className="space-y-4">
-              {notes.map((note) => (
-                <article
-                  key={note.id}
-                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-xl font-semibold">{note.title}</h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Created at {note.createdAt}
-                      </p>
+            {loading ? (
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-10 text-center text-slate-400">
+                Loading notes...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {notes.map((note) => (
+                  <article
+                    key={note.id}
+                    className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-xl font-semibold">{note.title}</h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Created at{" "}
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => deleteNote(note.id)}
+                        className="rounded-lg border border-red-900/60 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950"
+                      >
+                        Delete
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => deleteNote(note.id)}
-                      className="rounded-lg border border-red-900/60 px-3 py-2 text-sm text-red-300 transition hover:bg-red-950"
-                    >
-                      Delete
-                    </button>
+                    <p className="mt-4 leading-7 text-slate-300">
+                      {note.content}
+                    </p>
+                  </article>
+                ))}
+
+                {notes.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-700 p-10 text-center text-slate-400">
+                    No notes yet. Create your first note.
                   </div>
-
-                  <p className="mt-4 leading-7 text-slate-300">
-                    {note.content}
-                  </p>
-                </article>
-              ))}
-
-              {notes.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-700 p-10 text-center text-slate-400">
-                  No notes yet. Create your first note.
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </section>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
