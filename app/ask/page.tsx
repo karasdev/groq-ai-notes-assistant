@@ -1,126 +1,138 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
-type SourceNote = {
-  title: string;
-  content: string;
+type Source = {
+  id?: string;
+  title?: string;
+  content?: string;
+  score?: number;
 };
 
 export default function AskPage() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [sources, setSources] = useState<SourceNote[]>([]);
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function handleAsk() {
-    if (!question.trim()) return;
+  async function handleAsk(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!question.trim()) {
+      setError('Please enter a question.');
+      return;
+    }
 
     setLoading(true);
-    setAnswer("");
+    setError('');
+    setAnswer('');
     setSources([]);
 
-    // Temporary fake response for UI testing.
-    // Later replace this with fetch("/api/ask").
-    setTimeout(() => {
-      setAnswer(
-        "You need to finish the invoice feature by Friday. John will review the API changes."
-      );
-
-      setSources([
-        {
-          title: "Invoice Feature",
-          content:
-            "We need to finish the invoice feature by Friday. John will review the API changes.",
+    try {
+      const response = await fetch('/api/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ]);
+        body: JSON.stringify({
+          question: question.trim(),
+        }),
+      });
 
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to ask question.');
+      }
+
+      setAnswer(data.answer || '');
+      setSources(data.sources || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-10">
-          <p className="text-sm text-slate-400">Ask AI</p>
-          <h1 className="mt-2 text-3xl font-bold">Ask about your notes</h1>
-          <p className="mt-3 max-w-2xl text-slate-300">
-            The assistant will answer using your saved notes as context.
-          </p>
-        </header>
+    <main className="min-h-screen bg-gray-50 px-6 py-10">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">
+          Ask Your Notes
+        </h1>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          <label className="mb-3 block text-sm text-slate-300">
-            Your question
-          </label>
+        <p className="mb-8 text-gray-600">
+          Ask a question based on your uploaded or saved notes.
+        </p>
 
+        <form onSubmit={handleAsk} className="mb-6 space-y-4">
           <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Example: What should I finish by Friday?"
-            rows={4}
-            className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-slate-400"
+            placeholder="Example: What are the main points from my notes?"
+            className="min-h-32 w-full rounded-lg border border-gray-300 bg-white p-4 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
           />
 
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={handleAsk}
-              disabled={loading}
-              className="rounded-xl bg-white px-6 py-3 font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Thinking..." : "Ask AI"}
-            </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+          >
+            {loading ? 'Thinking...' : 'Ask'}
+          </button>
+        </form>
+
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 text-red-700">
+            {error}
           </div>
-        </section>
+        )}
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="text-lg font-semibold">Answer</h2>
+        {answer && (
+          <section className="mb-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">
+              Answer
+            </h2>
 
-            {!answer && !loading && (
-              <p className="mt-4 text-slate-500">
-                Ask a question to see the AI answer here.
-              </p>
-            )}
+            <p className="whitespace-pre-wrap text-gray-800">{answer}</p>
+          </section>
+        )}
 
-            {loading && (
-              <div className="mt-4 rounded-xl bg-slate-950 p-4 text-slate-400">
-                Searching your notes and asking Groq...
-              </div>
-            )}
+        {sources.length > 0 && (
+          <section className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-xl font-semibold text-gray-900">
+              Sources
+            </h2>
 
-            {answer && (
-              <div className="mt-4 rounded-xl bg-slate-950 p-5 leading-7 text-slate-200">
-                {answer}
-              </div>
-            )}
-          </div>
-
-          <aside className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <h2 className="text-lg font-semibold">Sources</h2>
-
-            {sources.length === 0 && (
-              <p className="mt-4 text-sm text-slate-500">
-                Source notes will appear here.
-              </p>
-            )}
-
-            <div className="mt-4 space-y-4">
+            <div className="space-y-4">
               {sources.map((source, index) => (
                 <div
-                  key={index}
-                  className="rounded-xl border border-slate-800 bg-slate-950 p-4"
+                  key={source.id || index}
+                  className="rounded-md border border-gray-200 p-4"
                 >
-                  <p className="font-medium">{source.title}</p>
-                  <p className="mt-2 line-clamp-4 text-sm leading-6 text-slate-400">
-                    {source.content}
-                  </p>
+                  {source.title && (
+                    <h3 className="mb-2 font-medium text-gray-900">
+                      {source.title}
+                    </h3>
+                  )}
+
+                  {source.content && (
+                    <p className="text-sm text-gray-700">
+                      {source.content}
+                    </p>
+                  )}
+
+                  {typeof source.score === 'number' && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Score: {source.score.toFixed(4)}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
-          </aside>
-        </section>
+          </section>
+        )}
       </div>
     </main>
   );
