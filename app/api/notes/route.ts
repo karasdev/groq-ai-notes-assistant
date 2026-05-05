@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { chunkText } from "@/lib/documentChunks";
 
 export async function GET() {
   try {
@@ -43,10 +44,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const chunks = chunkText(content);
+
     const note = await prisma.note.create({
       data: {
         title,
         content,
+        chunks: {
+          create: chunks.map((chunk, index) => ({
+            content: chunk,
+            chunkIndex: index,
+          })),
+        },
       },
     });
 

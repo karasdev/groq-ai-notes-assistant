@@ -1,25 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
-import type { Note } from "@prisma/client";
+import type { DocumentChunk, Note } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-type ScoredNote = Note & {
+type SearchCandidate = {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+  chunkId?: string;
+  chunkIndex?: number;
+};
+
+type ScoredCandidate = SearchCandidate & {
   score: number;
 };
 
-function searchNotes(question: string, notes: Note[], limit = 5): ScoredNote[] {
+type ChunkWithNote = DocumentChunk & {
+  note: Note;
+};
+
+type NoteWithChunkMarkers = Note & {
+  chunks: Pick<DocumentChunk, "id">[];
+};
+
+function searchCandidates(
+  question: string,
+  candidates: SearchCandidate[],
+  limit = 8
+): ScoredCandidate[] {
   const terms = question
     .toLowerCase()
     .split(/\W+/)
     .filter((word) => word.length > 2);
 
-  return notes
-    .map((note) => {
-      const text = `${note.title} ${note.content}`.toLowerCase();
+  return candidates
+    .map((candidate) => {
+      const text = `${candidate.title} ${candidate.content}`.toLowerCase();
 
       const score = terms.reduce((total, term) => {
         const matches = text.match(new RegExp(`\\b${term}\\b`, "g"));
@@ -27,13 +48,33 @@ function searchNotes(question: string, notes: Note[], limit = 5): ScoredNote[] {
       }, 0);
 
       return {
-        ...note,
+        ...candidate,
         score,
       };
     })
-    .filter((note) => note.score > 0)
+    .filter((candidate) => candidate.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+}
+
+function chunkToCandidate(chunk: ChunkWithNote): SearchCandidate {
+  return {
+    id: chunk.note.id,
+    title: chunk.note.title,
+    content: chunk.content,
+    createdAt: chunk.note.createdAt,
+    chunkId: chunk.id,
+    chunkIndex: chunk.chunkIndex,
+  };
+}
+
+function noteToCandidate(note: Note): SearchCandidate {
+  return {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    createdAt: note.createdAt,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -51,7 +92,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const notes = await prisma.note.findMany({
+    const notes: NoteWithChunkMarkers[] = await prisma.note.findMany({
+      include: {
+        chunks: {
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },
@@ -65,9 +114,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const matchedNotes = searchNotes(question, notes);
+    const documentChunks = await prisma.documentChunk.findMany({
+      include: {
+        note: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    if (matchedNotes.length === 0) {
+    const candidates = [
+      ...documentChunks.map(chunkToCandidate),
+      ...notes
+        .filter((note) => note.chunks.length === 0)
+        .map((note) => noteToCandidate(note)),
+    ];
+
+    const matchedSources = searchCandidates(question, candidates);
+
+    if (matchedSources.length === 0) {
       return NextResponse.json({
         success: true,
         answer: "I could not find relevant information in your notes.",
@@ -75,14 +140,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const notesContext = matchedNotes
-      .map((note, index) => {
+    const notesContext = matchedSources
+      .map((source, index) => {
         return `Source ${index + 1}
-Title: ${note.title}
-Created At: ${note.createdAt}
+Title: ${source.title}
+Chunk: ${
+          typeof source.chunkIndex === "number"
+            ? source.chunkIndex + 1
+            : "Full note"
+        }
+Created At: ${source.createdAt}
 
 Content:
-${note.content}`;
+${source.content}`;
       })
       .join("\n\n---\n\n");
 
@@ -122,11 +192,14 @@ ${note.content}`;
     return NextResponse.json({
       success: true,
       answer,
-      sources: matchedNotes.map((note) => ({
-        id: note.id,
-        title: note.title,
-        content: note.content,
-        createdAt: note.createdAt,
+      sources: matchedSources.map((source) => ({
+        id: source.id,
+        title: source.title,
+        content: source.content,
+        createdAt: source.createdAt,
+        chunkId: source.chunkId,
+        chunkIndex: source.chunkIndex,
+        score: source.score,
       })),
     });
   } catch (error) {

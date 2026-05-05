@@ -196,15 +196,15 @@ export default function NotesPage() {
             >
               <h2 className="text-lg font-semibold">Upload document</h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                Add a TXT, Markdown, CSV, or JSON file. The readable text will
-                be saved as a note for the AI assistant.
+                Add a TXT, Markdown, CSV, JSON, PDF, or DOCX file. The readable
+                text will be saved as searchable chunks for the AI assistant.
               </p>
 
               <div className="mt-5 space-y-4">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".txt,.md,.markdown,.csv,.json,text/plain,text/markdown,text/csv,application/json"
+                  accept=".txt,.md,.markdown,.csv,.json,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   className="block w-full cursor-pointer rounded-xl border border-slate-700 bg-slate-950 text-sm text-slate-300 outline-none file:mr-4 file:border-0 file:bg-white file:px-4 file:py-3 file:font-medium file:text-slate-950 hover:file:bg-slate-200 focus:border-slate-400"
                 />
 
