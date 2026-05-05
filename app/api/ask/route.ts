@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import type { Note } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-function searchNotes(question: string, notes: any[], limit = 5) {
+type ScoredNote = Note & {
+  score: number;
+};
+
+function searchNotes(question: string, notes: Note[], limit = 5): ScoredNote[] {
   const terms = question
     .toLowerCase()
     .split(/\W+/)
